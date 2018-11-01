@@ -17,48 +17,24 @@
 #include <stdio.h>
 #include "../server_include/irc.h"
 
-void	exit_close(int fd)
+int	set_client(int port, int fd, char *ip, struct sockaddr_in s_in)
 {
-	close(fd);
-	exit(84);
-}
-
-void	set_fd(server_t *client, struct timeval *tv, int fd)
-{
-	FD_ZERO(&client->fd_r);
-	FD_SET(fd, &client->fd_r);
-	FD_SET(1, &client->fd_r);
-	tv->tv_sec = 5;
-	tv->tv_usec = 0;	
-}
-
-int	set_client(int fd, struct sockaddr_in s_in)
-{
-	int	a = 0;
 	char	buff[1024];
-	struct timeval	tv;
-	char	*line = malloc(sizeof(char) * 1024);
-	int	ret;
+	char	*line;
 	size_t	bufsize = 1024;
-	server_t	client;
+	t_server	client;
 
+	if (connect(fd, (struct sockaddr *)&s_in, sizeof(s_in)) == -1) {
+		if (close(fd) == -1)
+			return 84;
+		return 84;
+	}
+	line = (char *)malloc(bufsize * sizeof(char));
        	while (1) {
-		set_fd(&client, &tv, fd);
-		if ((ret = select(fd + 1, &client.fd_r, NULL, NULL, &tv)) != -1) {
-			if (ret && FD_ISSET(fd, &client.fd_r) && a == 0) {
-				if (connect(fd, (struct sockaddr *)&s_in, sizeof(s_in)) == -1)
-					exit_close(fd);
-				a = 1;
-			}
-			else if (FD_ISSET(fd, &client.fd_r) && a == 1){
-				read(fd, buff, sizeof(buff));
-				write(0, buff, strlen(buff));
-			}
-			if (FD_ISSET(1, &client.fd_r)) {
-				getline(&line, &bufsize, stdin);
-				write(fd, line, sizeof(line));
-			}
-		}
+		getline(&line, &bufsize, stdin);
+		write(fd, line, sizeof(line));
+		read(fd, buff, sizeof(buff));
+		write(0, buff, strlen(buff));
 	}
 	if (close(fd) == -1)
 		return 84;
@@ -67,6 +43,7 @@ int	set_client(int fd, struct sockaddr_in s_in)
 
 int	main(int ac, char **av)
 {
+	size_t	n;
 	struct sockaddr_in	s_in;
 	struct protoent	*pe;
 	int	fd;
@@ -84,6 +61,6 @@ int	main(int ac, char **av)
 	s_in.sin_family = AF_INET;
 	s_in.sin_port = htons(port);
 	s_in.sin_addr.s_addr = inet_addr(ip);
-	set_client(fd, s_in);
+	set_client(port, fd, ip, s_in);
 	return 0;
 }

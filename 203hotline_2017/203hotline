@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+
+from math import *
+import sys
+import time
+
+def Combination(n, k):
+    return factorial(n) // (factorial(k) * factorial(n - k))
+
+def Binomial(n, k, d):
+    return Combination(n, k) * pow(d / 28800.0, k) * pow(0.99375, n - k)
+
+def BinomialDistribution(d):
+    print("Binomial distribution:")
+    start = time.time()
+    i = 0.0
+    count = 0
+    while (i <= 50):
+        binomial = Binomial(3500.0, i, d)
+        print("%d -> %0.3f" % (i, binomial), end='')
+        if ((1 + i) % 6 == 0 and i != 0):
+            print('\n', end='')
+        else:
+            if (i < 50):
+                print('\t', end='')
+        if (i > 25):
+            count = count + binomial * 100
+        i = i + 1
+    print("\noverload: %0.1f%%" % (count))
+    print("computation time: %0.2f ms" % ((time.time() - start) * 1000))
+
+def BinomialCombination(n, k):
+    print("%d-combination of a %d set:\n%d" % (k, n, Combination(n, k)))
+    
+def poisson():
+    print("Poisson distribution:")
+    end = time.time()
+    nb = 0
+    i = 0
+    total = 0.0
+    times = int(sys.argv[1])
+    times = ((3500 * times)/8)/3600
+    while (nb != 51):
+        res = ((times**nb)*exp(-times))/(factorial(nb))
+        print(nb, end='')
+        print(" -> ", end='')
+        print("%0.3f" % res, end='')
+        if (nb > 25):
+            total = total + res
+        if (i != 5 and nb != 50):
+            print("\t", end='')
+            i = i + 1
+        else:
+            print("")
+            i = 0
+        nb = nb + 1
+    total = total * 100
+    print("overload: %0.1f%%" % total)
+    print("computation time: %0.2f ms" % ((time.time() - end) * 1000))
+        
+def printHelp():
+    print("USAGE")
+    print("\t./203hotline [n k | d]")
+    print("")
+    print("DESCRIPTION")
+    print("\tn\tn value for the computation of (nk)")
+    print("\tk\tk value for the computation of (nk)")
+    print("\td\taverage duration of calls (in seconds)")
+    exit(0)
+
+if __name__ == '__main__':
+    if (len(sys.argv) == 2):
+        if (sys.argv[1] == "-h"):
+            printHelp()
+        if (not (sys.argv[1].isdigit() and int(sys.argv[1]) >= 0)):
+            print("ERROR : Wrong arg !")
+            exit(84)
+        BinomialDistribution(int(sys.argv[1]))
+        print("")
+        poisson()
+        exit(0)
+    if (len(sys.argv) == 3):
+        if (not (sys.argv[1].isdigit() and int(sys.argv[1]) >= 0 and sys.argv[2].isdigit() and int(sys.argv[2]) >= 0 and int(sys.argv[2]) <= 50)):
+            print("ERROR : Wrong arg !")
+            exit(84)                                
+        BinomialCombination(int(sys.argv[1]), int(sys.argv[2]))
+        exit(0)
+    exit(84)

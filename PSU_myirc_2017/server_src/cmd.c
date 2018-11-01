@@ -7,32 +7,33 @@
 
 #include "../server_include/irc.h"
 
-void	quit(server_t *server, int fd)
-{
-	server->client_list = remove_client(server->client_list, fd);
-	close(fd);
-}
-
-void	cmd(server_t *server)
+void	cmd(client_t *client_list, buf_t *buf)
 {
 	char	**tab;
 	int	fd;
 	char	*str;
 
-	str = buf_get(&server->buff);
+	str = buf_get(buf);
+	printf("%s\n", str);
+	fflush(stdout);
+	/*
 	tab = my_str_to_wordtab(str, " ");
 	fd = atoi(tab[0]);
 	str = tab[1];
-	if (strncmp(str, "PASS", 4) == 0)
-		password(server, tab, fd);
+	for (int i = 0 ; tab[i] ; i++) {
+		printf("Line : %s\n", tab[i]);
+	}
+	printf("END str : %s\n", str);
+	fflush(stdout);
 	if (strncmp(str, "NICK", 4) == 0)
-		nickname(server, tab, fd);
+		nickname(client_list, tab, fd);
+	if (strncmp(str, "PASS", 4) == 0)
+		password(client_list, tab, fd);
 	if (strncmp(str, "USER", 4) == 0)
-		username(server, tab, fd);
-	if (strncmp(str, "QUIT", 4) == 0)
-		quit(server, fd);
-	if (strncmp(str, "JOIN", 5) == 0)
-		join(server, tab, fd);
+		username(client_list, tab, fd);
+	//if (strncmp(str, "JOIN", 5) == 0)
+		//
 	//if (strncmp(str, "PRIVMSG", 7) == 0)
 		//
+	*/
 }

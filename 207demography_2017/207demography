@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+from math import *
+import sys
+import time
+import csv
+
+def getCountry(country):
+    with open('207demography_data.csv', newline='') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+        for row in spamreader:
+            if (row[1] == country):
+                return row
+    exit (0)
+
+def countryName():
+    i = 1
+    print("country:\t", end='')
+    while (i != len(sys.argv)):
+        if (i != 1):
+            print(", ", end='')
+        country = getCountry(sys.argv[i])
+        print(country[0], end='')
+        i = i + 1
+    print("")
+    print(country[3])
+    
+if __name__ == '__main__':
+    countryName()
+    exit (0)

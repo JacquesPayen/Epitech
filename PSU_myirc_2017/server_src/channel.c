@@ -9,7 +9,7 @@
 
 channel_t	*get_channel(channel_t *channel, char *str)
 {
-	while (channel) {
+	while (channel != NULL) {
 		if (strcmp(channel->name, str) == 0)
 			return channel;
 		channel = channel->next;
@@ -26,8 +26,6 @@ channel_t	*add_channel(channel_t *channel, char *str)
 	if (new_channel == NULL)
 		exit(84);
 	new_channel->name = strdup(str);
-	printf("Added channel : %s\n", str);
-	fflush(stdout);
 	if (channel_s == NULL)
 		return new_channel;
 	channel_s = channel;
@@ -49,15 +47,30 @@ int	is_in_channel(client_t *client, char *str)
 	return 1;
 }
 
-void	join(server_t *server, char **buf, int fd)
-{
-	client_t	*client;
+	/*
+   Channels names are strings (beginning with a '&' or '#' character) of
+   length up to 200 characters.  Apart from the the requirement that the
+   first character being either '&' or '#'; the only restriction on a
+   channel name is that it may not contain any spaces (' '), a control G
+   (^G or ASCII 7), or a comma (',' which is used as a list item
+   separator by the protocol).
+	*/
 
-	for (int i = 2 ; buf[i] ; i++) {
-		if (get_channel(server->channel_list, buf[i]) == NULL)
-			server->channel_list = add_channel(server->channel_list, buf[i]);
-		client = get_client_fd(server->client_list, fd);
-		if (is_in_channel(server->client_list, buf[i]) != 0)
-			client->channels = add_channel(client->channels, buf[i]);
+
+channel_t	*join(client_t *client_list, char **buf, int fd)
+{
+	char	**tab;
+	channel_t	*channel;
+
+	// if nb chan > 10 ERR_TOOMANYCHANNELS
+	tab = my_str_to_wordtab(buf[1], ",");
+	if (get_tab_len(tab) < 2)
+		//ERR_NEEDMOREPARAMS
+	for (int i = 1 ; tab[i] ; i++) {
+		if (get_channel(channel, tab[i]) == NULL)
+			channel = add_channel(channel, tab[i]);
+		if (is_in_channel(client_list, tab[i]) != 0)
+			client_list->channels = add_channel(client_list->channels, tab[i]);
 	}
+	return channel;
 }

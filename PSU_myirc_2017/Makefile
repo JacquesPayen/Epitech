@@ -10,9 +10,7 @@ SRC1 =	server_src/main.c	\
 	server_src/buffer.c	\
 	server_src/cmd.c	\
 	server_src/login.c	\
-	server_src/tools.c	\
-	server_src/channel.c	\
-	server_src/server.c
+	server_src/tools.c
 
 SRC2 =	client_src/main.c
 

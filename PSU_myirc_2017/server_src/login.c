@@ -7,64 +7,54 @@
 
 #include "../server_include/irc.h"
 
-void	password(server_t *server, char **buf, int fd)
+void	password(client_t *client_list, char **buf, int fd)
 {
-	char	str[512];
 	client_t	*client;
 
-	if (get_tab_len(buf) < 3) {
-		sprintf(str, ERR461, buf[1]);
-		write_mes(fd, str);
+	//if no pwd ERR_NEEDMOREPARAMS
+	client = get_client_fd(client_list, fd);
+	if (client == NULL)
 		return ;
-	}
-	client = get_client_fd(server->client_list, fd);
-	if (client->nickname && client->username) {
-		sprintf(str, ERR462);
-		write_mes(fd, str);
+		//ERR_UNKNOWNUSER
+	if (client->nickname && client->username)
 		return ;
-	}
+		//ERR_ALREADYREGISTRED
 	client->password = buf[2];
+	write_mes(fd, "Password OK\r\n");
 }
 
-int	check_nickname(char **buf, int fd)
+void	nickname(client_t *client_list, char **buf, int fd)
 {
-	char	str[512];
-
-	if (get_tab_len(buf) < 3) {
-		sprintf(str, ERR431);
-		write_mes(fd, str);
-		return 1;
-	}
-	if (strlen(buf[2]) > 9) {
-		sprintf(str, ERR432, buf[2]);
-		write_mes(fd, str);
-		return 1;
-	}
-	return 0;
-}
-
-void	nickname(server_t *server, char **buf, int fd)
-{
-	char	str[512];
 	client_t	*client;
 	client_t	*tmp;
 
-	if (check_nickname(buf, fd) != 0)
+	// if no nickname ERR_NONICKNAMEGIVEN
+	/*
+	if (strlen(buf[2]) > 9)
 		return ;
-	client = get_client_fd(server->client_list, fd);
-	tmp = get_client_nickname(server->client_list, buf[2]);
+		//ERR_ERRONEUSNICKNAME
+	*/
+	client = get_client_fd(client_list, fd);
+	if (client == NULL)
+		return ;
+		//ERR_UNKNOWNUSER
+	tmp = get_client_nickname(client_list, buf[2]);
+	for (int i = 0 ; buf[i] ; i++) {
+		printf("Line : %s\n", buf[i]);
+		fflush(stdout);
+	}
 	if (tmp != NULL) {
-		if (tmp != client) {
-			sprintf(str, ERR433, buf[2]);
-			write_mes(fd, str);
+		if (tmp == client)
 			return ;
+			//ERR_NICKCOLLISION
+		else { 
+			// ERR_NICKNAMEINUSE
+			//remove_client(); //client
+			//remove_client(); //tmp
 		}
 	}
 	client->nickname = buf[2];
-	if (client->username) {
-		sprintf(str, "001 %s %s", client->nickname, MSG001);
-		write_mes(fd, str);
-	}
+	write_mes(fd, "Nickname OK\r\n");
 }
 
 int	check_username(char *username)
@@ -81,25 +71,19 @@ int	check_username(char *username)
 	return 1;
 }
 
-void	username(server_t *server, char **buf, int fd)
+void	username(client_t *client_list, char **buf, int fd)
 {
-	char	str[512];
 	client_t	*client;
 
-	if (get_tab_len(buf) < 6) {
-		sprintf(str, ERR461, buf[1]);
-		write_mes(fd, str);
+	// check nb params ERR_NEEDMOREPARAMS
+	client = get_client_fd(client_list, fd);
+	if (client == NULL)
 		return ;
-	}
-	client = get_client_fd(server->client_list, fd);
-	if (client->username != NULL) {
-		sprintf(str, ERR462);
-		write_mes(fd, str);
+		//ERR_UNKNOWNUSER
+	if (client->username != NULL)
 		return ;
-	}
+		//ERR_ALREADYREGISTRED
 	client->username = buf[2];
-	if (client->username) {
-		sprintf(str, "001 %s %s", client->nickname, MSG001);
-		write_mes(fd, str);
-	}
+	printf("%s\n", client->username);
+	write_mes(fd, "Username OK\r\n");
 }

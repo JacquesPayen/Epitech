@@ -29,8 +29,10 @@ char	**my_str_to_wordtab(char *str, char *s)
 
 	tab = malloc(sizeof(char*) * (get_tokens_count(str, s) + 2));
 	tmp = strdup(str);
-	while ((token = strsep(&tmp, s)) != NULL) {
+	while (token = strsep(&tmp, s)) {
 		tab[i] = strdup(token);
+		printf("%s\n", tab[i]);
+		fflush(stdout);
 		i++;
 	}
 	tab[i] = NULL;
@@ -48,7 +50,6 @@ int	get_tab_len(char **tab)
 {
 	int	i = 0;
 
-	while (tab[i])
-		i++;
+	while (tab[i]);
 	return i;
 }
