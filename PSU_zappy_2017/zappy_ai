@@ -1,0 +1,420 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import math
+import fcntl
+import socket
+import time
+import re
+import binascii
+from random import randint
+
+buffer = ""
+dead = False
+isFoodItem = False
+nextMove = 0
+leaderDir = -1
+come = False
+level = 1
+leveling = False
+gathered = 0
+
+resources_list = ["linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"]
+
+elevation = [
+	[1, 1, 0, 0, 0, 0, 0], 
+	[2, 1, 1, 1, 0, 0, 0],
+	[2, 2, 0, 1, 0, 2, 0],
+	[4, 1, 1, 2, 0, 1, 0],
+	[4, 1, 2, 1, 3, 0, 0],
+	[6, 1, 2, 3, 0, 1, 0],
+	[6, 1, 2, 2, 2, 2, 1]
+	]
+
+#Current level: 2
+def incantation(s):
+	global level
+	global leveling
+	send_msg(s, "Incantation")
+	data = ""
+	while data == "":
+		data = get_msg(s)
+	if data == "ko":
+		return
+	data = ""
+	while len(data.split("Current level")) < 2:
+		data = get_msg(s)
+	if data != "ko":
+		level = level + 1
+	return data
+
+def set_obj(s, obj):
+	send_msg(s, "Set " + obj)
+	data = ""
+	while data != "ok" and data != "ko":
+		data = get_msg(s)
+	return data
+
+def take_obj(s, obj):
+	send_msg(s, "Take " + obj)
+	data = ""
+	while data != "ok" and data != "ko":
+		data = get_msg(s)
+	time.sleep(0.1)
+	inventory(s)
+	return data
+
+def eject(s):
+	send_msg(s, "Eject")
+	data = get_msg(s)
+	return data
+
+def fork(s):
+	send_msg(s, "Fork")
+	data = get_msg(s)
+	return data
+
+def co_nbr(s):
+	send_msg(s, "Connect_nbr")
+	data = get_msg(s)
+	return data
+
+def text(s, text):
+	send_msg(s, "Broadcast " + text)
+	data = ""
+	while data != "ok" and data != "ko":
+		data = get_msg(s)
+	return data
+
+def update_food(data):
+	global isFoodItem
+	food = int(data[0].split("food ")[1])
+	if food < 8:
+		isFoodItem = True
+	elif isFoodItem and food > 15:
+		isFoodItem = False
+
+def inventory(s):
+	send_msg(s, "Inventory")
+	data = ""
+	while data == "" or data == "ok" or data == "ko":
+		data = get_msg(s)
+	if data == "" or data == "ok" or data == "ko":
+		return None	
+	data = data.split("[ ")[1]
+	data = data.split(" ]")[0]
+	data = data.split(", ")
+	update_food(data)
+	data.pop(0)
+	print(data)
+	return data
+
+def look(s):
+	send_msg(s, "Look")
+	data = ""
+	while data == "" or data == "ok" or data == "ko":
+		data = get_msg(s)
+	if data == "" or data == "ok" or data == "ko":
+		return None
+	data = data.split("[ ")[1]
+	data = data.split(" ]")[0]
+	data = data.split(", ")
+	print(data)
+	return data
+
+def turn_left(s):
+	data = ""
+	send_msg(s, "Left")
+	while data != "ok" and data != "ko":
+		data = get_msg(s)
+	return data
+
+def turn_right(s):
+	data = ""
+	send_msg(s, "Right")
+	while data != "ok" and data != "ko":
+		data = get_msg(s)
+	return data
+
+def move_up(s):
+	data = ""
+	send_msg(s, "Forward")
+	while data != "ok" and data != "ko":
+		data = get_msg(s)
+	return data
+
+def check_dead(s, msg):
+	global dead
+	if msg == "dead":
+		dead = True
+	wait_end(s)
+
+def check_result(s, msg):
+	global leaderDir
+	global come
+	check_dead(s, msg)
+	if len(msg.split("message")) > 1:
+		if len(msg.split(sys.argv[4])) > 1:
+			msg = msg.split("message ")[1]
+			msg = msg.split(", ")
+			leaderDir = int(msg[0])
+			msg = msg[1].split(" ")
+			if len(msg) == 1:
+				if come == True:
+					come = False
+			else:
+				if come == False:
+					come = True
+		return ""
+	return msg
+
+
+def wait_end(s):
+	if not dead:
+		return
+	s.close()
+	print("I'm dead")
+	while 1:
+		time.sleep(1)
+
+def send_msg(s, msg):
+	print("Send : %s" % (msg))
+	s.send((msg + "\n").encode())
+	time.sleep(0.1)
+
+def get_msg(s):
+	global buffer
+	try:
+		while True:
+			data = s.recv(2048)
+			data = str(data)
+			print("Data : %s|END" % (data))
+			data = data.split("b'")[1]
+			data = data.split("'")[0]
+			data = data.replace("\\n", "\\")
+			buffer += data
+			if buffer != "" and "\\" in buffer:
+				msg_list = buffer.split("\\")
+				result = msg_list[0]
+				if (len(msg_list) != 1 and msg_list[1] != ""):
+					print("Before : %s|END" % (buffer))
+					buffer = buffer.split(result + "\\")[1]
+					print("After : %s|END" % (buffer))
+				else:
+					buffer = ""
+				print("Result : %s|END" % (result))
+				result = check_result(s, result)
+				print("Return : %s|END" % (result))
+				return result
+	except:
+		if buffer != "" and "\\" in buffer:
+				msg_list = buffer.split("\\")
+				result = msg_list[0]
+				if (len(msg_list) != 1 and msg_list[1] != ""):
+					print("Before : %s|END" % (buffer))
+					buffer = buffer.split(result + "\\")[1]
+					print("After : %s|END" % (buffer))
+				else:
+					buffer = ""
+				print("Result : %s|END" % (result))
+				result = check_result(s, result)
+				print("Return : %s|END" % (result))
+				return result
+	return ""
+
+def has_item(item, items):
+	if item in items:
+		return True
+	return False
+
+def is_item(item):
+	if (item in resources_list):
+			return True
+	return False
+
+def has_items(map, nb):
+	if (nb > len(map) - 1):
+		return False
+	items = map[nb].split(" ")
+	if (nb != 0 and "player" in items) or (nb == 0 and items.count("player") > 1):
+		return False
+	for item in items:
+		if is_item(item):
+			return True
+	return False
+
+def get_simple_move(map):
+	if (has_items(map, 0)):
+		return 0
+	if (has_items(map, 2)):
+		return 2
+	if (has_items(map, 6)):
+		return 6
+	if (has_items(map, 12)):
+		return 12
+	if (has_items(map, 20)):
+		return 20
+	# if (has_items(map, 30)):
+	# 	return 30
+	# if (has_items(map, 42)):
+	# 	return 42
+	# if (has_items(map, 56)):
+	# 	return 56
+	return -1
+
+def go_for_items(s, map):
+	global nextMove
+	global gathered
+	nb = get_simple_move(map)
+	if (nb != -1):
+		nextMove = 0
+		if (nb == 0):
+			items = map[0].split(" ")
+			if isFoodItem and has_item("food", items):
+				take_obj(s, "food")
+				return
+			for item in items:
+				if is_item(item):
+					take_obj(s, item)
+					gathered = gathered + 1
+					return
+		move_up(s)
+		return
+	if nextMove < 3:
+		move_up(s)
+		nextMove = nextMove + 1
+	else:
+		d = randint(0, 1)
+		if d == 0:
+			turn_left(s)
+		else:
+			turn_right(s)
+		nextMove = 0
+
+
+def join_leader(s, map):
+	global leaderDir
+	global isFoodItem
+	global gathered
+	if leaderDir == 0:
+		items = inventory(s)
+		if items == None:
+			return
+		if not isFoodItem:
+			set_obj(s, "food")
+			return
+		for item in items:
+			litem = item.split(" ")
+			if int(litem[1]) > 0:
+				set_obj(s, litem[0])
+				return
+		gathered = 0
+	if leaderDir == 1 or leaderDir == 2 or leaderDir == 8:
+		move_up(s)
+	if leaderDir == 3 or leaderDir == 4 or leaderDir == 5:
+		turn_left(s)
+	if leaderDir == 6 or leaderDir == 7:
+		turn_right(s)
+
+def ai(s):
+	global come
+	global gathered
+	while 1:
+		map = look(s)
+		if map == None:
+			continue
+		if gathered > 9 or come:
+			join_leader(s, map)
+		else:
+			go_for_items(s, map)
+
+def can_evolve(cell):
+	available = [0, 0, 0, 0, 0, 0, 0]
+
+	for item in cell:
+		if item == "player":
+			available[0] = available[0] + 1
+			continue
+		i = 0
+		while i < len(resources_list):
+			if resources_list[i] == item:
+				available[i + 1] = available[i + 1] + 1
+				break
+			i = i + 1
+	i = 1
+	while i < len(available):
+		if available[i] < elevation[level - 1][i]:
+			return False, False
+		i = i + 1
+	if available[0] < elevation[level - 1][0]:
+		return True, False
+	return True, True
+
+def leader_ai(s):
+	global isFoodItem
+	while 1:
+		cell = look(s)
+		if cell == None:
+			continue
+		cell = cell[0].split(" ")
+		if "food" in cell:
+			take_obj(s, "food")
+		evolve, player = can_evolve(cell)
+		if evolve:
+			text(s, "Universia Come")
+			if player:
+				incantation(s)
+		else:
+			text(s, "Universia")
+
+
+def is_leader(s):
+	d = int(binascii.hexlify(os.urandom(1000)),16) % 1000
+	d = 200
+	i = 0
+	while i < d:
+		get_msg(s)
+		if leaderDir != -1:
+			print("Not Leader")
+			return False
+		i = i + 1
+		time.sleep(0.05)
+	text(s, "Universia")
+	print("Leader")
+	return True
+
+def help():
+	print("USAGE: ./zappy_ai -p port -n name -h machine")
+	print("       port     is the port number")
+	print("       name     is the name of the team")
+	print("       machine  is the name of the machine; localhost by default")
+
+if __name__ == "__main__":
+	if len(sys.argv) == 2 and sys.argv[1] == "-h":
+		help()
+		sys.exit(0)
+	elif len(sys.argv) == 5:
+		machine = "localhost"
+	elif len(sys.argv) == 7:
+		machine = sys.argv[6]
+	else:
+		print("Error, wrong number of args")
+		sys.exit(84)
+	name = sys.argv[4]
+	TCP_IP = '127.0.0.1'
+	TCP_PORT = int(sys.argv[2])
+
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((TCP_IP, TCP_PORT))
+
+	get_msg(s)
+	fcntl.fcntl(s, fcntl.F_SETFL, os.O_NONBLOCK)
+	s.send((name + "\n").encode())
+
+	if is_leader(s):
+		leader_ai(s)
+	else:
+		ai(s)
+
+	s.close()
