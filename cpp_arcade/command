@@ -1,0 +1,1 @@
+g++ -o executable -ldl lib/sdl/sdl.cpp games/snake/*.cpp src/*.cpp -L./lib -I./include -lSDL2-2.0 -lSDL2_ttf -std=c++11 -ldl
