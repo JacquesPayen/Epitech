@@ -1,0 +1,80 @@
+{
+  " client ": {
+    " host ": "10.101.53.35"
+  },
+  " server ": {
+    " current_time ": 1531680780,
+    " services ": [
+      {
+        " name ": "weather",
+        " widgets ": [
+          {
+            " name ": "city_temperature",
+            " description ": "Affichage de la temperature pour une ville",
+            " params ": [
+              {
+                " name ": " city ",
+                " type ": " string "
+              }
+            ]
+          },
+          {
+            " name ": "city_humidity",
+            " description ": "Affichage de l'humidite dans une ville",
+            " params ": [
+              {
+                " name ": " city ",
+                " type ": " string "
+              }
+            ]
+          },
+          {
+            " name ": "city_wind",
+            " description ": "Affichage de la vitesse du vent pour une ville",
+            " params ": [
+              {
+                " name ": " city ",
+                " type ": " string "
+              }
+            ]
+          }
+        ]
+      },
+      {
+        " name ": "youtube",
+        " widgets ": [
+          {
+            " name ": "youtube_view",
+            " description ": " Affichage du nombre de vue d'une video youtube ",
+            " params ": [
+              {
+                " name ": "video_id",
+                " type ": " string "
+              }
+            ]
+          },
+          {
+            " name ": "youtube_like",
+            " description ": " Affichage du nombre de like d'une video youtube ",
+            " params ": [
+              {
+                " name ": "video_id",
+                " type ": " string "
+              }
+            ]
+          },
+          {
+            " name ": "youtube_dislike",
+            " description ": " Affichage du nombre de dislike d'une video youtube ",
+            " params ": [
+              {
+                " name ": "video_id",
+                " type ": " string "
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

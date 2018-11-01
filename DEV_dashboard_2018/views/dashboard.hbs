@@ -1,0 +1,52 @@
+﻿<h1>{{user.profile.firstName}}'s Dashboard</h1>
+<p>Here's where you would put something useful. How about your profile info?</p>
+<dl>
+    {{#each descriptionList}}
+    <dt>{{this.term}}</dt>
+    <dd>{{this.details}}</dd>
+    {{/each}}
+</dl>
+<br />
+<body>
+    <form method="post">
+        <h3>Service or Widget:</h3>
+        <select id="myList" name="widget">
+            {{#if we}}
+            <option>Temperature</option>
+            <option>Humidity</option>
+            <option>Wind</option>
+            {{else}}
+            <option>Activate Weather Service</option>
+            {{/if}}
+            {{#if yt}}
+            <option>View</option>
+            <option>Like</option>
+            <option>Dislike</option>
+            {{else}}
+            <option>Activate Youtube Service</option>
+            {{/if}}
+        </select>
+        <h3>Argument, city for weather 'Combloux, FR' or Youtube video id 'f2qy87HC1Ws'</h3>
+        <input type="text" id="myText" name="text" value="Argument">
+        <button type="submit">Add widget</button>
+        <br /><br />
+</body>
+
+<ul>
+    {{#each result}}
+    <li>{{ this }}</li>
+    {{/each}}
+</ul>
+
+<script>
+    function check() {
+        var mylist = document.getElementById("myList");
+        var x = document.getElementById("myText").value;
+        if (mylist.value == 'Temperature') {
+            var res = "Temperature ";
+            //var infor = temperature(x);
+            var res = res + infor;
+            document.getElementById("info").innerHTML = res;
+        }
+    }
+</script>
