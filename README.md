@@ -1,0 +1,3 @@
+# Epitech
+
+Some school project 
